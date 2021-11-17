@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jalali_calendar/jalali_calendar.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'DNA.dart';
 import 'item.dart';
 
@@ -16,12 +17,20 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // for reporting
   final omumiController = TextEditingController();
   final ekhtesasiController = TextEditingController();
   final khalesController = TextEditingController();
   final nakhalesController = TextEditingController();
-  final ssnController = TextEditingController();
-  final passController = TextEditingController();
+
+  // for sign in
+  final login_phoneController = TextEditingController();
+  final login_hashController = TextEditingController();
+
+  // for sign up
+  final hashController = TextEditingController();
+  final nameController = TextEditingController();
+  final phoneController = TextEditingController();
 
   List<Item>? allUsers;
   List<Item> validatedUsers = List<Item>.empty();
@@ -29,11 +38,11 @@ class _HomePageState extends State<HomePage> {
   late SharedPreferences prefs;
   MySqlConnection? conn;
 
-  String ssn = '';
+  int userId = 0;
   String name = '';
   String date = '';
 
-  bool loginWidgetsEnabled = true;
+  bool widgetsEnabled = true;
   bool justSent = false;
   bool adminMode = false;
   bool noUserRanksVisible = true;
@@ -48,17 +57,17 @@ class _HomePageState extends State<HomePage> {
       is8 = false,
       is9 = false;
 
-  Future<String> getSSN() async {
+  Future<int> getUserId() async {
     prefs = await SharedPreferences.getInstance();
     setState(() {
-      ssn = prefs.getString('ssn') ?? '';
+      userId = prefs.getInt('user_id') ?? 0;
       name = prefs.getString('name') ?? '';
       if (name != '')
         name = name + '، دمت گرم!';
       else
         name = 'دمت گرم!';
     });
-    return ssn;
+    return userId;
   }
 
   DNA dna = new DNA();
@@ -78,7 +87,7 @@ class _HomePageState extends State<HomePage> {
     ]);
 
     return FutureBuilder(
-      future: getSSN(),
+      future: getUserId(),
       builder: (context, snapshot) {
         if (adminMode)
           return adminModeWidget();
@@ -86,7 +95,7 @@ class _HomePageState extends State<HomePage> {
           return successWidget();
         else {
           if (snapshot.hasData) {
-            if (ssn != '') {
+            if (userId != 0) {
               PersianDate persianDate = PersianDate();
               date = persianDate.weekdayname.toString() +
                   ' ' +
@@ -95,9 +104,9 @@ class _HomePageState extends State<HomePage> {
                   persianDate.monthname.toString() +
                   ' ' +
                   persianDate.year.toString();
-              return sendNumbersWidget();
+              return addReportWidget();
             } else
-              return loginWidget();
+              return welcomeWidget();
           } else
             return Scaffold(
               backgroundColor: Colors.grey.shade100,
@@ -114,7 +123,415 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget loginWidget() {
+  // WIDGETS FOR DIFFERENT MODES
+
+  Widget welcomeWidget() {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        body: SafeArea(
+          child: Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0.0, 84.0, 0.0, 24.0),
+                  child: Text(
+                    'ثبت نام در آدار مشاور',
+                    style: TextStyle(
+                      fontSize: 25.0,
+                      color: Colors.lightBlue.shade700,
+                      fontFamily: 'IranSansMed',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 24.0),
+                  child: Lottie.asset(
+                    'assets/anim/welcome.json',
+                    animate: true,
+                    repeat: true,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: TextField(
+                      enabled: widgetsEnabled,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: "شماره‌ی همراه",
+                        border: InputBorder.none,
+                        suffixIcon: Icon(
+                          Icons.text_fields_outlined,
+                          color: Colors.white,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.phone_outlined,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      controller: phoneController,
+                      style: TextStyle(fontSize: 14.0),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: TextField(
+                      enabled: widgetsEnabled,
+                      decoration: InputDecoration(
+                        hintText: "رمز عبور",
+                        suffixIcon: Icon(
+                          Icons.text_fields_outlined,
+                          color: Colors.white,
+                        ),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.0),
+                      controller: hashController,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: TextField(
+                      enabled: widgetsEnabled,
+                      decoration: InputDecoration(
+                        hintText: "نام و نام خانوادگی",
+                        suffixIcon: Icon(
+                          Icons.text_fields_outlined,
+                          color: Colors.white,
+                        ),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          Icons.text_fields_outlined,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.0),
+                      controller: nameController,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 0.0),
+                  child: Text(
+                    '\u202E' +
+                        dna.createAnagram(
+                            'برای ثبت نام در آدار مشاور، اطلاعات خود را وارد کنید.'),
+                    style: TextStyle(
+                      fontSize: 13.0,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'IranSans',
+                    ),
+                    textAlign: TextAlign.justify,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 32.0),
+                  child: Card(
+                    color: widgetsEnabled
+                        ? Colors.green.shade700
+                        : Colors.grey.shade500,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: AbsorbPointer(
+                      absorbing: !widgetsEnabled,
+                      child: InkWell(
+                          enableFeedback: widgetsEnabled,
+                          borderRadius: BorderRadius.circular(20.0),
+                          onTap: () {
+                            if (phoneController.text.length != 11)
+                              Fluttertoast.showToast(
+                                  msg: "شماره‌ی همراه واردشده کوتاه است!",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.CENTER,
+                                  timeInSecForIosWeb: 1,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 15.0);
+                            else if (phoneController.text.length == 0 ||
+                                hashController.text.length == 0 ||
+                                nameController.text.length == 0)
+                              Fluttertoast.showToast(
+                                  msg: "لطفاً تمامی اطلاعات را وارد کنید!",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.CENTER,
+                                  timeInSecForIosWeb: 1,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 15.0);
+                            else
+                              signIn();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: widgetsEnabled
+                                ? Text(
+                              'ثبت نام',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'IranSansMed',
+                                fontSize: 15.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            )
+                                : Center(
+                              child: SizedBox(
+                                  height: 25.0,
+                                  width: 25.0,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3.0,
+                                    color: Colors.white,
+                                  )),
+                            ),
+                          )),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget signUpWidget() {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        body: SafeArea(
+          child: Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0.0, 84.0, 0.0, 24.0),
+                  child: Text(
+                    'ثبت نام در آدار مشاور',
+                    style: TextStyle(
+                      fontSize: 25.0,
+                      color: Colors.lightBlue.shade700,
+                      fontFamily: 'IranSansMed',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 24.0),
+                  child: Lottie.asset(
+                    'assets/anim/welcome.json',
+                    animate: true,
+                    repeat: true,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: TextField(
+                      enabled: widgetsEnabled,
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: "شماره‌ی همراه",
+                        border: InputBorder.none,
+                        suffixIcon: Icon(
+                          Icons.text_fields_outlined,
+                          color: Colors.white,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.phone_outlined,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      controller: phoneController,
+                      style: TextStyle(fontSize: 14.0),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: TextField(
+                      enabled: widgetsEnabled,
+                      decoration: InputDecoration(
+                        hintText: "رمز عبور",
+                        suffixIcon: Icon(
+                          Icons.text_fields_outlined,
+                          color: Colors.white,
+                        ),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          Icons.lock_outline,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.0),
+                      controller: hashController,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: TextField(
+                      enabled: widgetsEnabled,
+                      decoration: InputDecoration(
+                        hintText: "نام و نام خانوادگی",
+                        suffixIcon: Icon(
+                          Icons.text_fields_outlined,
+                          color: Colors.white,
+                        ),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(
+                          Icons.text_fields_outlined,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.0),
+                      controller: nameController,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 0.0),
+                  child: Text(
+                    '\u202E' +
+                        dna.createAnagram(
+                            'برای ثبت نام در آدار مشاور، اطلاعات خود را وارد کنید.'),
+                    style: TextStyle(
+                      fontSize: 13.0,
+                      color: Colors.grey.shade500,
+                      fontFamily: 'IranSans',
+                    ),
+                    textAlign: TextAlign.justify,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 32.0),
+                  child: Card(
+                    color: widgetsEnabled
+                        ? Colors.green.shade700
+                        : Colors.grey.shade500,
+                    margin: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
+                    ),
+                    elevation: 0.0,
+                    child: AbsorbPointer(
+                      absorbing: !widgetsEnabled,
+                      child: InkWell(
+                          enableFeedback: widgetsEnabled,
+                          borderRadius: BorderRadius.circular(20.0),
+                          onTap: () {
+                            if (phoneController.text.length != 11)
+                              Fluttertoast.showToast(
+                                  msg: "شماره‌ی همراه واردشده کوتاه است!",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.CENTER,
+                                  timeInSecForIosWeb: 1,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 15.0);
+                            else if (phoneController.text.length == 0 ||
+                                hashController.text.length == 0 ||
+                                nameController.text.length == 0)
+                              Fluttertoast.showToast(
+                                  msg: "لطفاً تمامی اطلاعات را وارد کنید!",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.CENTER,
+                                  timeInSecForIosWeb: 1,
+                                  backgroundColor: Colors.red,
+                                  textColor: Colors.white,
+                                  fontSize: 15.0);
+                             else
+                              signIn();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: widgetsEnabled
+                                ? Text(
+                              'ثبت نام',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'IranSansMed',
+                                fontSize: 15.0,
+                              ),
+                              textAlign: TextAlign.center,
+                            )
+                                : Center(
+                              child: SizedBox(
+                                  height: 25.0,
+                                  width: 25.0,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3.0,
+                                    color: Colors.white,
+                                  )),
+                            ),
+                          )),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget signInWidget() {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -159,25 +576,25 @@ class _HomePageState extends State<HomePage> {
                   ),
                   elevation: 0.0,
                   child: TextField(
-                    enabled: loginWidgetsEnabled,
+                    enabled: widgetsEnabled,
                     inputFormatters: <TextInputFormatter>[
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                      LengthLimitingTextInputFormatter(10),
+                      LengthLimitingTextInputFormatter(11),
                     ],
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      hintText: "کد ملی",
+                      hintText: "شماره‌ی همراه",
                       border: InputBorder.none,
                       suffixIcon: Icon(
                         Icons.text_fields_outlined,
                         color: Colors.white,
                       ),
                       prefixIcon: Icon(
-                        Icons.password_outlined,
+                        Icons.phone_outlined,
                       ),
                     ),
                     textAlign: TextAlign.center,
-                    controller: ssnController,
+                    controller: login_phoneController,
                     style: TextStyle(fontSize: 14.0),
                   ),
                 ),
@@ -191,12 +608,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   elevation: 0.0,
                   child: TextField(
-                    enabled: loginWidgetsEnabled,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                      LengthLimitingTextInputFormatter(4),
-                    ],
-                    keyboardType: TextInputType.number,
+                    enabled: widgetsEnabled,
                     decoration: InputDecoration(
                       hintText: "رمز عبور",
                       suffixIcon: Icon(
@@ -210,7 +622,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14.0),
-                    controller: passController,
+                    controller: login_hashController,
                   ),
                 ),
               ),
@@ -219,7 +631,7 @@ class _HomePageState extends State<HomePage> {
                 child: Text(
                   '\u202E' +
                       dna.createAnagram(
-                          'برای ورود به نرم‌افزار، کد ملی و رمز عبور خود را وارد کنید. اگر رمز عبوری ندارید، می‌توانید آن را از مشاور خود دریافت کنید.'),
+                          'برای ورود به نرم‌افزار، شماره‌ی همراه و رمز عبور خود را وارد کنید. اگر رمز عبوری ندارید، می‌توانید آن را از مشاور خود دریافت کنید.'),
                   style: TextStyle(
                     fontSize: 13.0,
                     color: Colors.grey.shade500,
@@ -231,7 +643,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 32.0),
                 child: Card(
-                  color: loginWidgetsEnabled
+                  color: widgetsEnabled
                       ? Colors.green.shade700
                       : Colors.grey.shade500,
                   margin: EdgeInsets.zero,
@@ -240,42 +652,42 @@ class _HomePageState extends State<HomePage> {
                   ),
                   elevation: 0.0,
                   child: AbsorbPointer(
-                    absorbing: !loginWidgetsEnabled,
+                    absorbing: !widgetsEnabled,
                     child: InkWell(
-                        enableFeedback: loginWidgetsEnabled,
+                        enableFeedback: widgetsEnabled,
                         borderRadius: BorderRadius.circular(20.0),
                         onTap: () {
-                          if (ssnController.text.length != 10)
+                          if (login_phoneController.text.length != 11)
                             Fluttertoast.showToast(
-                                msg: "کد ملی واردشده کوتاه است!",
+                                msg: "شماره‌ی همراه واردشده کوتاه است!",
                                 toastLength: Toast.LENGTH_SHORT,
                                 gravity: ToastGravity.CENTER,
                                 timeInSecForIosWeb: 1,
                                 backgroundColor: Colors.red,
                                 textColor: Colors.white,
                                 fontSize: 15.0);
-                          else if (ssnController.text.length == 0 ||
-                              passController.text.length == 0)
+                          else if (login_phoneController.text.length == 0 ||
+                              login_hashController.text.length == 0)
                             Fluttertoast.showToast(
-                                msg: "کد ملی و رمز عبور را وارد کنید!",
+                                msg: "شماره‌ی همراه و رمز عبور را وارد کنید!",
                                 toastLength: Toast.LENGTH_SHORT,
                                 gravity: ToastGravity.CENTER,
                                 timeInSecForIosWeb: 1,
                                 backgroundColor: Colors.red,
                                 textColor: Colors.white,
                                 fontSize: 15.0);
-                          else if (ssnController.text == '9611001079' &&
-                              passController.text == '1034') {
+                          else if (login_phoneController.text == '9611001079' &&
+                              login_hashController.text == '1034') {
                             setState(() {
                               adminMode = true;
                             });
                             setState(() {});
                           } else
-                            connectToDatabase();
+                            signIn();
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
-                          child: loginWidgetsEnabled
+                          child: widgetsEnabled
                               ? Text(
                                   'ورود به نرم‌افزار',
                                   style: TextStyle(
@@ -305,7 +717,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget sendNumbersWidget() {
+  Widget addReportWidget() {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -350,7 +762,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         elevation: 0.0,
                         child: TextField(
-                          enabled: loginWidgetsEnabled,
+                          enabled: widgetsEnabled,
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                             LengthLimitingTextInputFormatter(4),
@@ -382,7 +794,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         elevation: 0.0,
                         child: TextField(
-                          enabled: loginWidgetsEnabled,
+                          enabled: widgetsEnabled,
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
                             LengthLimitingTextInputFormatter(3),
@@ -428,7 +840,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         elevation: 0.0,
                         child: TextField(
-                          enabled: loginWidgetsEnabled,
+                          enabled: widgetsEnabled,
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.allow(
                                 RegExp(r'[0-9\.]')),
@@ -460,7 +872,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         elevation: 0.0,
                         child: TextField(
-                          enabled: loginWidgetsEnabled,
+                          enabled: widgetsEnabled,
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.allow(
                                 RegExp(r'[0-9\.]')),
@@ -503,7 +915,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 32.0),
                 child: Card(
-                  color: loginWidgetsEnabled
+                  color: widgetsEnabled
                       ? Colors.green.shade700
                       : Colors.grey.shade500,
                   margin: EdgeInsets.zero,
@@ -512,9 +924,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                   elevation: 0.0,
                   child: AbsorbPointer(
-                    absorbing: !loginWidgetsEnabled,
+                    absorbing: !widgetsEnabled,
                     child: InkWell(
-                        enableFeedback: loginWidgetsEnabled,
+                        enableFeedback: widgetsEnabled,
                         borderRadius: BorderRadius.circular(20.0),
                         onTap: () {
                           if (ekhtesasiController.text.length == 0 ||
@@ -548,11 +960,11 @@ class _HomePageState extends State<HomePage> {
                                 textColor: Colors.white,
                                 fontSize: 15.0);
                           else
-                            uploadValues();
+                            addReport();
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
-                          child: loginWidgetsEnabled
+                          child: widgetsEnabled
                               ? Text(
                                   'ارسال اطلاعات به مشاور',
                                   style: TextStyle(
@@ -630,7 +1042,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   elevation: 0.0,
                   child: InkWell(
-                      enableFeedback: loginWidgetsEnabled,
+                      enableFeedback: widgetsEnabled,
                       borderRadius: BorderRadius.circular(20.0),
                       onTap: () {
                         SystemChannels.platform
@@ -967,10 +1379,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> connectToDatabase() async {
+  // DATABASE CONNECTIONS
+
+  Future<void> signUp() async {
     try {
       setState(() {
-        loginWidgetsEnabled = false;
+        widgetsEnabled = false;
       });
       var settings = new ConnectionSettings(
           host: '158.58.187.220',
@@ -979,13 +1393,59 @@ class _HomePageState extends State<HomePage> {
           password: '3.1415926535Takht',
           timeout: Duration(seconds: 5),
           db: 'adarbase_reportdb');
-      conn = await MySqlConnection.connect(settings);
+      if (conn == null) conn = await MySqlConnection.connect(settings);
+
+      await conn!.query(
+          'INSERT INTO `users` (`name`, `phone`, `hash`, `avg_weekly_score`, `avg_score`, `last_payment_date`) VALUES (?, ?, ?, ?, ?, ?);',
+          [
+            double.parse(nameController.text),
+            double.parse(phoneController.text),
+            double.parse(hashController.text),
+            0,
+            0,
+            null,
+          ]).whenComplete(() => {
+            setState(() {
+              nameController.clear();
+              phoneController.clear();
+              hashController.clear();
+            }),
+          });
+    } catch (error) {
+      Fluttertoast.showToast(
+          msg: "مشکلی در اتصال به سرور رخ داده است!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 15.0);
+      setState(() {
+        widgetsEnabled = true;
+      });
+    }
+  }
+
+  Future<void> signIn() async {
+    try {
+      setState(() {
+        widgetsEnabled = false;
+      });
+      var settings = new ConnectionSettings(
+          host: '158.58.187.220',
+          port: 3306,
+          user: 'reportadmin',
+          password: '3.1415926535Takht',
+          timeout: Duration(seconds: 5),
+          db: 'adarbase_reportdb');
+      if (conn == null) conn = await MySqlConnection.connect(settings);
+
       var results = await conn!.query(
-          'SELECT pass, username FROM users WHERE ssn = ?',
-          [ssnController.text]);
+          'SELECT hash, name, user_id FROM users WHERE phone = ?',
+          [login_phoneController.text]);
       if (results.length == 0) {
         Fluttertoast.showToast(
-            msg: "کد ملی در دیتابیس موجود نیست!",
+            msg: "شماره در دیتابیس موجود نیست!",
             toastLength: Toast.LENGTH_SHORT,
             gravity: ToastGravity.CENTER,
             timeInSecForIosWeb: 1,
@@ -993,9 +1453,9 @@ class _HomePageState extends State<HomePage> {
             textColor: Colors.white,
             fontSize: 15.0);
         setState(() {
-          loginWidgetsEnabled = true;
+          widgetsEnabled = true;
         });
-      } else if (results.first[0] == passController.text) {
+      } else if (results.first[0] == login_hashController.text) {
         Fluttertoast.showToast(
             msg: "ورود موفقیت‌آمیز بود!",
             toastLength: Toast.LENGTH_SHORT,
@@ -1005,8 +1465,8 @@ class _HomePageState extends State<HomePage> {
             textColor: Colors.white,
             fontSize: 15.0);
         setState(() {
-          loginWidgetsEnabled = true;
-          prefs.setString('ssn', ssnController.text);
+          widgetsEnabled = true;
+          prefs.setInt('user_id', results.first[2]);
           prefs.setString('name', results.first[1]);
         });
       } else {
@@ -1019,7 +1479,7 @@ class _HomePageState extends State<HomePage> {
             textColor: Colors.white,
             fontSize: 15.0);
         setState(() {
-          loginWidgetsEnabled = true;
+          widgetsEnabled = true;
         });
       }
     } catch (error) {
@@ -1032,15 +1492,15 @@ class _HomePageState extends State<HomePage> {
           textColor: Colors.white,
           fontSize: 15.0);
       setState(() {
-        loginWidgetsEnabled = true;
+        widgetsEnabled = true;
       });
     }
   }
 
-  Future<void> uploadValues() async {
+  Future<void> addReport() async {
     try {
       setState(() {
-        loginWidgetsEnabled = false;
+        widgetsEnabled = false;
       });
       var settings = new ConnectionSettings(
           host: '158.58.187.220',
@@ -1052,7 +1512,7 @@ class _HomePageState extends State<HomePage> {
       if (conn == null) conn = await MySqlConnection.connect(settings);
 
       await conn!.query(
-          'UPDATE users SET ekhtesasi = ?, omumi = ?, khales = ?, nakhales = ?, bazdeh = ?, score = ? WHERE ssn = ?',
+          'INSERT INTO `reports` (`name`, `phone`, `hash`, `avg_weekly_score`, `avg_score`, `last_payment_date`) VALUES (?, ?, ?, ?, ?, ?);',
           [
             double.parse(ekhtesasiController.text),
             double.parse(omumiController.text),
@@ -1065,7 +1525,7 @@ class _HomePageState extends State<HomePage> {
                 double.parse(omumiController.text),
                 ((double.parse(khalesController.text) * 100) /
                     double.parse(nakhalesController.text))),
-            ssn
+            userId
           ]).whenComplete(() => {
             setState(() {
               justSent = true;
@@ -1085,7 +1545,7 @@ class _HomePageState extends State<HomePage> {
           textColor: Colors.white,
           fontSize: 15.0);
       setState(() {
-        loginWidgetsEnabled = true;
+        widgetsEnabled = true;
       });
     }
   }
@@ -1163,6 +1623,8 @@ class _HomePageState extends State<HomePage> {
           fontSize: 15.0);
     }
   }
+
+  // OTHER FUNCTIONS
 
   int mySorter(Item a, Item b) {
     if (a.score > b.score)
