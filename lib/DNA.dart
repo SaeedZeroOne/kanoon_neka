@@ -33,10 +33,51 @@ class DNA {
       return false;
   }
 
-  double score(double ekh, double omu, double bazdeh) {
-    double ekh100 = ekh * 100 * 12 / 175;
-    double omu100 = ekh * 100 * 1 / 100;
-    double bazdeh100 = bazdeh * 4;
-    return (omu100 + ekh100 + bazdeh100) * 90 / 17;
+  double score(double ekh, double omu, double khales, double bazdeh) {
+    if (ekh > 175)
+      ekh = 175;
+
+    if (omu > 100)
+      omu = 100;
+
+    if (khales > 16)
+      khales = 16;
+
+    double ekh100 = ekh * 100 * 4 / 175;
+    double omu100 = omu * 100 * 1 / 100;
+    double khales100 = khales * 100 * 2 / 16;
+    double bazdeh100 = bazdeh * 1;
+    double sabet = 2 * 100;
+    return (omu100 + ekh100 + bazdeh100 + khales100 + sabet) * 9;
+  }
+
+  String persianMonth(int month)
+  {
+    switch (month) {
+      case 1:
+        return 'فروردین';
+      case 2:
+        return 'اردیبهشت';
+      case 3:
+        return 'خرداد';
+      case 4:
+        return 'تیر';
+      case 5:
+        return 'مرداد';
+      case 6:
+        return 'شهریور';
+      case 7:
+        return 'مهر';
+      case 8:
+        return 'آبان';
+      case 9:
+        return 'آذر';
+      case 10:
+        return 'دی';
+      case 11:
+        return 'بهمن';
+      default:
+        return 'اسفند';
+    }
   }
 }

@@ -1,14 +1,15 @@
 class Item {
-
   int id;
   String name;
-  double ekh;
-  double omu;
+  int ekh;
+  int omu;
   double khales;
-  double nakhales;
+  double sleep;
+  double school;
   double score;
-  int validated;
+  double avg;
   String group;
 
-  Item(this.id, this.name, this.ekh, this.omu, this.khales, this.nakhales, this.score, this.validated, this.group);
+  Item(this.id, this.name, this.ekh, this.omu, this.khales, this.sleep,
+      this.school, this.score, this.avg, this.group);
 }
