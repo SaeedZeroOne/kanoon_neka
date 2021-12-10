@@ -80,4 +80,14 @@ class DNA {
         return 'اسفند';
     }
   }
+
+  String removeTrailingZeros(double input) {
+    return input == input.truncate()
+        ? input.toInt().toString()
+        : input.toString();
+  }
+
+  String justify(String input) {
+    return '\u202E' + createAnagram(input);
+  }
 }

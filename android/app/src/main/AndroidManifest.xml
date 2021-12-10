@@ -2,7 +2,7 @@
     package="com.example.kanoon_neka">
       <uses-permission android:name="android.permission.INTERNET"/> <!-- Add this -->
    <application
-        android:label="Ashoori Rep"
+        android:label="Adar Log"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
