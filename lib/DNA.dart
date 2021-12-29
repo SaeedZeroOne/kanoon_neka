@@ -33,6 +33,14 @@ class DNA {
       return false;
   }
 
+  bool isOnlyPersian(String input) {
+    RegExp regex = new RegExp(r"^[\u0600-\u06FF\uFB8A\u067E\u0686\u06AF\s‌]+$");
+    if (regex.hasMatch(input))
+      return true;
+    else
+      return false;
+  }
+
   double score(double ekh, double omu, double khales, double bazdeh) {
     if (ekh > 175)
       ekh = 175;
