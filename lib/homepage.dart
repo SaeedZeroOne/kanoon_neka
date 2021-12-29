@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:dart_mysql/dart_mysql.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'DNA.dart';
+import 'Zarinpal.dart';
 import 'history_item.dart';
 import 'item.dart';
 
@@ -22,7 +25,31 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  String show = "تراکنش انجام نشده است";
+
+  Zarinpal zarinpal = new Zarinpal();
+
+  zarinPalRequest() {
+    num price = 1000000;
+    if (maxDays > daysPassed) {
+      price *= daysPassed / maxDays;
+      price = price.floor();
+    }
+
+    zarinpal.setPaymentRequest(
+        description: "خرید نسخه کامل",
+        amount: price,
+        callBackURL: "retuern://zarinpalpayment",
+        email: "0",
+        mobile: "0",
+        merchantID: "4af99307-772c-484c-8d94-94c105db1b6b");
+
+    zarinpal.makePostRequest().then((value) => setState(() {
+          show = value;
+        }));
+  }
+
   // for reporting
   final omumiController = TextEditingController();
   final ekhtesasiController = TextEditingController();
@@ -58,6 +85,7 @@ class _HomePageState extends State<HomePage> {
   String historyModePhone = '';
   double historyModeAverage = 0;
   int historyModeUserId = 0;
+  bool historyModePermanent = false;
 
   bool widgetsEnabled = true;
   bool justSent = false;
@@ -87,9 +115,7 @@ class _HomePageState extends State<HomePage> {
     name = prefs.getString('name') ?? '';
 
     permanentUser = prefs.getBool('permanent_user') ?? false;
-    if (permanentUser)
-      maxDays = 365;
-
+    if (permanentUser) maxDays = 365;
 
     if (name == '') name = 'پروفایل دانش‌آموز';
     return userId;
@@ -132,6 +158,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance!.addObserver(this);
 
     WidgetsBinding.instance!.addPostFrameCallback((_) => showGeneralDialog(
         context: context,
@@ -158,12 +185,178 @@ class _HomePageState extends State<HomePage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Lottie.asset(
+                                  'assets/anim/welcome_back_2.json',
+                                  animate: true,
+                                  repeat: true,
+                                ),
+                              ),
+                            ),
+                            Spacer(),
                             Padding(
-                              padding: const EdgeInsets.all(32.0),
-                              child: Lottie.asset(
-                                'assets/anim/welcome_back_2.json',
-                                animate: true,
-                                repeat: true,
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                'ارائه‌شده توسط آکادمی آدار',
+                                style: TextStyle(
+                                  fontFamily: 'IranSansMed',
+                                  fontSize: 15.0,
+                                  color: Colors.blue.shade800,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 16.0),
+                              child: Divider(
+                                  thickness: 1.0, height: 1.0, indent: 110.0, endIndent: 110.0, color: Colors.blue.shade800),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 4.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12.0),
+                                child: Card(
+                                  elevation: 0.0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                  color: Colors.grey.shade100,
+                                  margin: EdgeInsets.zero,
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                    child: ExpansionTile(
+                                      tilePadding: EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 0.0),
+                                      textColor: Colors.black,
+                                      iconColor: Colors.black,
+                                      leading: CircleAvatar(
+                                        radius: 24.0,
+                                        backgroundImage: AssetImage('assets/imgs/amirreza.png'),
+                                      ),
+                                      title: Text(
+                                        'امیررضا عشوری',
+                                        style: TextStyle(fontFamily: 'IranSansMed', fontSize: 14.0),
+                                      ),
+                                      subtitle: Text(
+                                        'دانشجوی سال پنجم پزشکی',
+                                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12.0),
+                                      ),
+                                      children: [
+                                        Divider(
+                                          height: 1.0,
+                                          color: Colors.grey.shade400,
+                                          indent: 16.0,
+                                          endIndent: 16.0,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 0.0),
+                                                child: Icon(
+                                                  Icons.perm_identity_outlined,
+                                                  size: 20.0,
+                                                ),
+                                              ),
+                                              Text(
+                                                'amirreza_ashoori',
+                                                style: TextStyle(fontSize: 13.0, fontFamily: 'IranSansMed'),
+                                              ),
+                                              Spacer(),
+                                              Text(
+                                                '09051993399',
+                                                style: TextStyle(fontSize: 13.0, fontFamily: 'IranSansMed'),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 0.0),
+                                                child: Icon(
+                                                  Icons.phone_outlined,
+                                                  size: 20.0,
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12.0),
+                                child: Card(
+                                  elevation: 0.0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                  color: Colors.grey.shade100,
+                                  margin: EdgeInsets.zero,
+                                  child: Theme(
+                                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                    child: ExpansionTile(
+                                      tilePadding: EdgeInsets.fromLTRB(12.0, 0.0, 12.0, 0.0),
+                                      textColor: Colors.black,
+                                      iconColor: Colors.black,
+                                      leading: CircleAvatar(
+                                        radius: 24.0,
+                                        backgroundImage: AssetImage('assets/imgs/saeed1.jpg'),
+                                      ),
+                                      title: Text(
+                                        'سعید محمدی',
+                                        style: TextStyle(fontFamily: 'IranSansMed', fontSize: 14.0),
+                                      ),
+                                      subtitle: Text(
+                                        'دانشجوی سال پنجم پزشکی',
+                                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12.0),
+                                      ),
+                                      children: [
+                                        Divider(
+                                          height: 1.0,
+                                          color: Colors.grey.shade400,
+                                          indent: 16.0,
+                                          endIndent: 16.0,
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 0.0),
+                                                child: Icon(
+                                                  Icons.perm_identity_outlined,
+                                                  size: 20.0,
+                                                ),
+                                              ),
+                                              Text(
+                                                'saeedzeroone',
+                                                style: TextStyle(fontSize: 13.0, fontFamily: 'IranSansMed'),
+                                              ),
+                                              Spacer(),
+                                              Text(
+                                                '09352189998',
+                                                style: TextStyle(fontSize: 13.0, fontFamily: 'IranSansMed'),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.fromLTRB(8.0, 0.0, 8.0, 0.0),
+                                                child: Icon(
+                                                  Icons.phone_outlined,
+                                                  size: 20.0,
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -173,9 +366,9 @@ class _HomePageState extends State<HomePage> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(0.0, 4.0, 0.0, 16.0),
                         child: Text(
-                          'برای ورود، صفحه را به بالا بکشید',
+                          'هُلم بده بریم بالا!',
                           style: TextStyle(fontFamily: 'IranSansMed'),
-                        textAlign: TextAlign.center,
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ],
@@ -185,12 +378,47 @@ class _HomePageState extends State<HomePage> {
         }));
   }
 
+  void onResumed() {
+    zarinpal.makePostVerify().then((value) => {
+          if (value.toString().contains('تراکنش موفق'))
+            {
+              prefs.setBool('paid', true),
+              updatePayment(),
+              setState(() {
+                show = value;
+                daysPassed = 0;
+              }),
+            },
+          print(value),
+        });
+  }
+
   @override
   void dispose() {
     try {
       if (conn != null) conn!.close();
     } finally {
+      WidgetsBinding.instance!.removeObserver(this);
       super.dispose();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.paused:
+        break;
+      case AppLifecycleState.resumed:
+        setState(() {
+          onResumed();
+        });
+
+        break;
+      case AppLifecycleState.inactive:
+        break;
+      case AppLifecycleState.detached:
+        break;
     }
   }
 
@@ -248,7 +476,7 @@ class _HomePageState extends State<HomePage> {
                   child: Card(
                     margin: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     elevation: 0.0,
                     child: TextField(
@@ -280,10 +508,15 @@ class _HomePageState extends State<HomePage> {
                   child: Card(
                     margin: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     elevation: 0.0,
                     child: TextField(
+                      inputFormatters: <TextInputFormatter>[
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      keyboardType: TextInputType.number,
                       enabled: widgetsEnabled,
                       decoration: InputDecoration(
                         hintText: "رمز عبور",
@@ -307,7 +540,7 @@ class _HomePageState extends State<HomePage> {
                   child: Card(
                     margin: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     elevation: 0.0,
                     child: TextField(
@@ -347,14 +580,14 @@ class _HomePageState extends State<HomePage> {
                     color: widgetsEnabled ? Colors.green.shade700 : Colors.grey.shade500,
                     margin: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(12.0),
                     ),
                     elevation: 0.0,
                     child: AbsorbPointer(
                       absorbing: !widgetsEnabled,
                       child: InkWell(
                           enableFeedback: widgetsEnabled,
-                          borderRadius: BorderRadius.circular(20.0),
+                          borderRadius: BorderRadius.circular(12.0),
                           onTap: () {
                             if (phoneController.text.length != 11)
                               EasyLoading.showToast('شماره‌ی همراه واردشده کوتاه است');
@@ -467,6 +700,11 @@ class _HomePageState extends State<HomePage> {
                       ),
                       elevation: 0.0,
                       child: TextField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        keyboardType: TextInputType.number,
                         enabled: widgetsEnabled,
                         decoration: InputDecoration(
                           hintText: "رمز عبورت رو این‌جا بنویس",
@@ -522,7 +760,7 @@ class _HomePageState extends State<HomePage> {
                                 EasyLoading.showToast('شماره‌ی همراه واردشده کوتاه است');
                               else if (loginPhoneController.text.length == 0 || loginHashController.text.length == 0)
                                 EasyLoading.showToast('شماره‌ی همراه و رمز عبور را وارد کنید');
-                              else if (loginPhoneController.text == '09611001079' && loginHashController.text == '1034') {
+                              else if (loginPhoneController.text == '09611001079' && loginHashController.text == '3399') {
                                 setState(() {
                                   adminMode = true;
                                 });
@@ -622,7 +860,9 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       enableFeedback: daysPassed > 20,
-                      onTap: () {},
+                      onTap: () {
+                        if (daysPassed > 20) zarinPalRequest();
+                      },
                       child: Ink(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.all(Radius.circular(12.0)),
@@ -725,10 +965,10 @@ class _HomePageState extends State<HomePage> {
                                             )),
                             ),
                             Visibility(
-                                visible: permanentUser ? (daysPassed > 365) : (daysPassed > 20),
+                                visible: permanentUser ? (daysPassed > 355) : (daysPassed > 20),
                                 child: Divider(height: 1.0, indent: 16.0, endIndent: 16.0, color: Colors.white70)),
                             Visibility(
-                              visible: permanentUser ? (daysPassed > 365) : (daysPassed > 20),
+                              visible: permanentUser ? (daysPassed > 355) : (daysPassed > 20),
                               child: Padding(
                                 padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 12.0),
                                 child: Row(
@@ -752,9 +992,9 @@ class _HomePageState extends State<HomePage> {
                                       child: Text(
                                         daysPassed <= 30
                                             ? dna.justify((30 - daysPassed).toString() +
-                                                ' روز دیگر حساب کاربری شما غیرفعال می‌شود. در این صورت، بازده، تراز و رتبه‌ای دریافت نخواهید کرد. برای فعال‌سازی مجدد، لطفاً اشتراک این ماه را خریداری کنید.')
+                                                ' روز دیگر حساب کاربری شما غیرفعال می‌شود. در این صورت، بازده، تراز و رتبه‌ای دریافت نخواهید کرد. برای فعال‌سازی مجدد، لطفاً اشتراک آدار را خریداری کنید. (با توجه به آن که هنوز مقداری از اشتراک فعلی باقی مانده است، در صورت پرداخت، هزینه‌ی آن کاهش می‌یابد.)')
                                             : dna.justify(
-                                                'حساب کاربری شما غیرفعال شده است. از حالا، بازده، تراز و رتبه‌ای دریافت نخواهید کرد. برای فعال‌سازی مجدد، لطفاً اشتراک این ماه را خریداری کنید.'),
+                                                'حساب کاربری شما غیرفعال شده است. از حالا، بازده، تراز و رتبه‌ای دریافت نخواهید کرد. برای فعال‌سازی مجدد، لطفاً اشتراک آدار را خریداری کنید.'),
                                         style: TextStyle(
                                           fontSize: 13.0,
                                           fontFamily: 'IranSansMed',
@@ -951,7 +1191,7 @@ class _HomePageState extends State<HomePage> {
                                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                             children: [
                                                               Text(
-                                                                'گزارش امروز را وارد کنید',
+                                                                'گزارش امروزو وارد کن :)',
                                                                 textAlign: TextAlign.center,
                                                                 style: TextStyle(
                                                                   // color: Colors.blueAccent,
@@ -959,14 +1199,8 @@ class _HomePageState extends State<HomePage> {
                                                                   fontSize: 16.0,
                                                                 ),
                                                               ),
-                                                              IconButton(
-                                                                onPressed: () {},
-                                                                icon: Icon(
-                                                                  Icons.info_outlined,
-                                                                ),
-                                                                splashRadius: 20.0,
-                                                                padding: EdgeInsets.zero,
-                                                                constraints: BoxConstraints(),
+                                                              Icon(
+                                                                Icons.report_outlined,
                                                               ),
                                                             ],
                                                           ),
@@ -1068,7 +1302,7 @@ class _HomePageState extends State<HomePage> {
                                                               ],
                                                               keyboardType: TextInputType.number,
                                                               decoration: InputDecoration(
-                                                                labelText: "زمان خالص مطالعه",
+                                                                labelText: "زمان خالص مطالعه (ساعت)",
                                                                 labelStyle: TextStyle(color: Colors.grey.shade600),
                                                                 border: InputBorder.none,
                                                                 suffixIcon: Icon(
@@ -1104,7 +1338,7 @@ class _HomePageState extends State<HomePage> {
                                                               ],
                                                               keyboardType: TextInputType.number,
                                                               decoration: InputDecoration(
-                                                                labelText: "زمان خواب",
+                                                                labelText: "زمان خواب (ساعت)",
                                                                 labelStyle: TextStyle(color: Colors.grey.shade600),
                                                                 border: InputBorder.none,
                                                                 suffixIcon: Icon(
@@ -1140,7 +1374,7 @@ class _HomePageState extends State<HomePage> {
                                                               ],
                                                               keyboardType: TextInputType.number,
                                                               decoration: InputDecoration(
-                                                                labelText: "زمان مدرسه و کلاس",
+                                                                labelText: "زمان مدرسه و کلاس (ساعت)",
                                                                 labelStyle: TextStyle(color: Colors.grey.shade600),
                                                                 suffixIcon: Icon(
                                                                   Icons.text_fields_outlined,
@@ -1228,7 +1462,46 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     )
-                  : Container(),
+                  : Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 60.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 0.0),
+                              child: Text(
+                                'داریم سعی می‌کنیم اطلاعاتت رو پیدا کنیم',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 16.0, color: Colors.blueAccent.shade700, fontFamily: 'IranSansMed'),
+                              ),
+                            ),
+                            SizedBox(height: 100, child: Lottie.asset('assets/anim/waiting.json')),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 8.0),
+                              child: Text(
+                                'اگه چیزی پیدا نشه...',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0.0),
+                              child: Text(
+                                'یا اینترنتت قطعه و مشکل داره •-•\nیا فیلترشکن روشن کردی *-*\nیا قسمت نیست ^-^',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 14.0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
             ],
           ),
         ),
@@ -1327,7 +1600,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.fromLTRB(0.0, 0.0, 16.0, 0.0),
-                          child: Text(
+                          child: Text( historyMode ? historyModeName :
                             'امیررضا عشوری',
                             style: TextStyle(
                               fontSize: 16.0,
@@ -1370,145 +1643,268 @@ class _HomePageState extends State<HomePage> {
                             ? Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 0.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          historyModeName,
-                                          style: TextStyle(
-                                            color: Colors.lightBlue.shade700,
-                                            fontSize: 18.0,
-                                            fontFamily: 'IranSansMed',
+                                  FadeIn(
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 24.0),
+                                      child: Card(
+                                        margin: EdgeInsets.zero,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12.0),
+                                        ),
+                                        elevation: 4.0,
+                                        child: InkWell(
+                                          customBorder: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12.0),
+                                          ),
+                                          onTap: () {
+                                          },
+                                          child: Ink(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Colors.blueAccent,
+                                                  Colors.blueAccent.shade700,
+                                                ],
+                                                begin: Alignment.topRight,
+                                                end: Alignment.bottomLeft,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Padding(
+                                                  padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0),
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                    children: [
+                                                      Text(
+                                                        'آخرین رتبه: ' + userRank.toString(),
+                                                        style: TextStyle(
+                                                          fontSize: 18.0,
+                                                          color: Colors.white,
+                                                          fontFamily: 'IranSansMed',
+                                                        ),
+                                                        textAlign: TextAlign.center,
+                                                      ),
+                                                      Text(
+                                                        'میانگین تراز: ' + historyModeAverage.round().toString(),
+                                                        style: TextStyle(
+                                                          fontSize: 18.0,
+                                                          fontFamily: 'IranSansMed',
+                                                          color: Colors.white,
+                                                        ),
+                                                        textAlign: TextAlign.center,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        Text(
-                                          ' (میانگین تراز: ' + historyModeAverage.round().toString() + ')',
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 18.0,
-                                            fontFamily: 'IranSansMed',
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.vertical,
+                                  histories != null
+                                      ? Expanded(
+                                    child: FadeIn(
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
                                         child: Container(
                                           decoration: BoxDecoration(
+                                              color: Color(0xFFF4FBFF),
                                               border: Border.all(width: 1.0, color: Colors.grey.shade300),
                                               borderRadius: BorderRadius.all(Radius.circular(12.0))),
                                           child: ClipRRect(
                                             borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: DataTable(
-                                                headingRowHeight: 48.0,
-                                                dataRowColor: MaterialStateColor.resolveWith((states) => Colors.white),
-                                                headingRowColor: MaterialStateColor.resolveWith((states) => Colors.grey.shade300),
-                                                headingTextStyle: TextStyle(
-                                                  fontFamily: 'IranSansMed',
-                                                  color: Colors.black,
-                                                ),
-                                                columns: [
-                                                  DataColumn(
-                                                    label: Text('روز'),
-                                                    numeric: false,
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('تاریخ'),
-                                                    numeric: false,
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('اختصاصی'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('عمومی'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('خالص'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('خواب'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('کلاس'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('آزاد'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('بازده'),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text('تراز'),
-                                                  ),
-                                                ],
-                                                rows: histories!
-                                                    .map(
-                                                      (history) => DataRow(
-                                                        cells: [
-                                                          DataCell(
-                                                            Text(history.date.weekday
-                                                                .toString()
-                                                                .replaceAll('1', 'دوشنبه')
-                                                                .replaceAll('2', 'سه‌شنبه')
-                                                                .replaceAll('3', 'چهارشنبه')
-                                                                .replaceAll('4', 'پنج‌شنبه')
-                                                                .replaceAll('5', 'جمعه')
-                                                                .replaceAll('6', 'شنبه')
-                                                                .replaceAll('7', 'یک‌شنبه')),
-                                                            onTap: () {
-                                                              // write your code..
-                                                            },
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                                              children: [
+                                                Expanded(
+                                                  child: SingleChildScrollView(
+                                                    scrollDirection: Axis.vertical,
+                                                    child: SingleChildScrollView(
+                                                      scrollDirection: Axis.horizontal,
+                                                      child: DataTable(
+                                                        headingRowHeight: 48.0,
+                                                        dataRowColor: MaterialStateColor.resolveWith(
+                                                                (states) => Color(0xFFF4FBFF)),
+                                                        headingRowColor: MaterialStateColor.resolveWith(
+                                                                (states) => Colors.lightBlue.shade50),
+                                                        headingTextStyle: TextStyle(
+                                                          fontFamily: 'IranSansMed',
+                                                          color: Colors.blue.shade800,
+                                                        ),
+                                                        columns: [
+                                                          DataColumn(
+                                                            label: Text('روز'),
+                                                            numeric: false,
                                                           ),
-                                                          DataCell(
-                                                            Text(
-                                                              Jalali.fromDateTime(history.date).day.toString() +
-                                                                  ' ' +
-                                                                  dna.persianMonth(Jalali.fromDateTime(history.date).month) +
-                                                                  ' ' +
-                                                                  Jalali.fromDateTime(history.date).year.toString(),
-                                                            ),
+                                                          DataColumn(
+                                                            label: Text('تاریخ'),
+                                                            numeric: false,
                                                           ),
-                                                          DataCell(
-                                                            Text(history.ekh.toString()),
+                                                          DataColumn(
+                                                            label: Text('اختصاصی'),
                                                           ),
-                                                          DataCell(
-                                                            Text(history.omu.toString()),
+                                                          DataColumn(
+                                                            label: Text('عمومی'),
                                                           ),
-                                                          DataCell(
-                                                            Text(history.khales.toString()),
+                                                          DataColumn(
+                                                            label: Text('خالص'),
                                                           ),
-                                                          DataCell(
-                                                            Text(history.sleep.toString()),
+                                                          DataColumn(
+                                                            label: Text('خواب'),
                                                           ),
-                                                          DataCell(
-                                                            Text(history.school.toString()),
+                                                          DataColumn(
+                                                            label: Text('کلاس'),
                                                           ),
-                                                          DataCell(
-                                                            Text((24 - history.sleep - history.school).toString()),
+                                                          DataColumn(
+                                                            label: Text('آزاد'),
                                                           ),
-                                                          DataCell(
-                                                            Text(history.bazdeh.toString()),
+                                                          DataColumn(
+                                                            label: Text('بازده'),
                                                           ),
-                                                          DataCell(
-                                                            Text(history.score.toString()),
+                                                          DataColumn(
+                                                            label: Text('تراز'),
                                                           ),
                                                         ],
+                                                        rows: histories!
+                                                            .map(
+                                                              (history) => DataRow(
+                                                            cells: [
+                                                              DataCell(
+                                                                Text(history.date.weekday
+                                                                    .toString()
+                                                                    .replaceAll('1', 'دوشنبه')
+                                                                    .replaceAll('2', 'سه‌شنبه')
+                                                                    .replaceAll('3', 'چهارشنبه')
+                                                                    .replaceAll('4', 'پنج‌شنبه')
+                                                                    .replaceAll('5', 'جمعه')
+                                                                    .replaceAll('6', 'شنبه')
+                                                                    .replaceAll('7', 'یک‌شنبه')),
+                                                                onTap: () {
+                                                                  // write your code..
+                                                                },
+                                                              ),
+                                                              DataCell(
+                                                                Text(
+                                                                  Jalali.fromDateTime(history.date).day.toString() +
+                                                                      ' ' +
+                                                                      dna.persianMonth(Jalali.fromDateTime(history.date).month) +
+                                                                      ' ' +
+                                                                      Jalali.fromDateTime(history.date).year.toString(),
+                                                                ),
+                                                              ),
+                                                              DataCell(
+                                                                Text(history.ekh.toString()),
+                                                              ),
+                                                              DataCell(
+                                                                Text(history.omu.toString()),
+                                                              ),
+                                                              DataCell(
+                                                                Text(dna.removeTrailingZeros(history.khales).toString()),
+                                                              ),
+                                                              DataCell(
+                                                                Text(dna.removeTrailingZeros(history.sleep).toString()),
+                                                              ),
+                                                              DataCell(
+                                                                Text(dna.removeTrailingZeros(history.school).toString()),
+                                                              ),
+                                                              DataCell(
+                                                                Text(dna
+                                                                    .removeTrailingZeros((24 - history.sleep - history.school))
+                                                                    .toString()
+                                                                    ),
+                                                              ),
+                                                              DataCell(
+                                                                Text(dna.removeTrailingZeros(history.bazdeh).toString()
+                                                                    ),
+                                                              ),
+                                                              DataCell(
+                                                                Text(dna.removeTrailingZeros(history.score).toString()
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        )
+                                                            .toList(),
                                                       ),
-                                                    )
-                                                    .toList(),
-                                              ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Divider(height: 1.0, color: Colors.grey.shade400),
+                                                Card(
+                                                  color: widgetsEnabled
+                                                      ? Color(0xFFF4FBFF)
+                                                      : Colors.grey.shade500,
+                                                  margin: EdgeInsets.zero,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(0.0),
+                                                  ),
+                                                  elevation: 0.0,
+                                                  child: AbsorbPointer(
+                                                    absorbing: !widgetsEnabled,
+                                                    child: InkWell(
+                                                        enableFeedback: widgetsEnabled,
+                                                        borderRadius: BorderRadius.circular(0.0),
+                                                        onTap: () {
+                                                          historyModePermanent ? convertToMonthly(historyModeUserId) : convertToPermanent(historyModeUserId);
+                                                        },
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.all(12.0),
+                                                          child: permanentUser
+                                                              ? Text('تبدیل اشتراک به ماهانه', style: TextStyle(fontSize: 14.0, color: Colors.blue.shade800),)
+                                                              : Text('تبدیل اشتراک به سالانه', style: TextStyle(fontSize: 14.0, color: Colors.blue.shade800))
+                                                          ),
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
+                                      ),
+                                    ),
+                                  )
+                                      : Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 60.0),
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(0.0, 16.0, 0.0, 0.0),
+                                            child: Text(
+                                              'داریم سعی می‌کنیم اطلاعات رو پیدا کنیم',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(fontSize: 16.0, color: Colors.blueAccent.shade700, fontFamily: 'IranSansMed'),
+                                            ),
+                                          ),
+                                          SizedBox(height: 100, child: Lottie.asset('assets/anim/waiting.json')),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 8.0),
+                                            child: Text(
+                                              'اگه چیزی پیدا نشه...',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 14.0,
+                                              ),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 0.0),
+                                            child: Text(
+                                              'یا اینترنت قطعه و مشکل داره •-•\nیا فیلترشکن روشنه *-*\nیا قسمت نیست ^-^',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.grey.shade500,
+                                                fontSize: 14.0,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -1672,10 +2068,10 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(20.0),
                                     onTap: () {
                                       AlertDialog alert = AlertDialog(
-                                        title: Text('TextField in Dialog'),
                                         content: TextField(
+                                          keyboardType: TextInputType.number,
                                           controller: adminPhoneController,
-                                          decoration: InputDecoration(hintText: "User Phone Number"),
+                                          decoration: InputDecoration(hintText: "Phone Number"),
                                         ),
                                         actions: <Widget>[
                                           TextButton(
@@ -1685,7 +2081,7 @@ class _HomePageState extends State<HomePage> {
                                             },
                                           ),
                                           TextButton(
-                                            child: Text('OK'),
+                                            child: Text('GO'),
                                             onPressed: () {
                                               getUserHistory(adminPhoneController.text);
                                               Navigator.pop(context);
@@ -1741,35 +2137,6 @@ class _HomePageState extends State<HomePage> {
                                         ))),
                               ),
                             ),
-                            Spacer(),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-                              child: Card(
-                                color: Colors.red.shade400,
-                                margin: EdgeInsets.zero,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                ),
-                                elevation: 0.0,
-                                child: InkWell(
-                                    enableFeedback: widgetsEnabled,
-                                    borderRadius: BorderRadius.circular(20.0),
-                                    onTap: () {
-                                      updateRanks();
-                                    },
-                                    child: Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Text(
-                                          'به‌روزرسانی رتبه‌های دانش‌آموزان',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontFamily: 'IranSansMed',
-                                            fontSize: 15.0,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ))),
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -1791,7 +2158,7 @@ class _HomePageState extends State<HomePage> {
         widgetsEnabled = false;
       });
 
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       await conn!.query(
           'INSERT INTO `users` (`name`, `phone`, `hash`, `avg_score`, `last_payment_date`) VALUES (?, ?, ?, ?, CURRENT_DATE());',
@@ -1816,6 +2183,7 @@ class _HomePageState extends State<HomePage> {
       });
     } finally {
       EasyLoading.dismiss();
+      conn!.close();
     }
   }
 
@@ -1827,7 +2195,7 @@ class _HomePageState extends State<HomePage> {
         widgetsEnabled = false;
       });
 
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       var results = await conn!.query(
           'SELECT hash, name, user_id, avg_score, last_rank, DATEDIFF(CURRENT_DATE(), last_payment_date), user_mode FROM users WHERE phone = ?',
@@ -1887,6 +2255,7 @@ class _HomePageState extends State<HomePage> {
         widgetsEnabled = true;
       });
     } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
@@ -1894,10 +2263,12 @@ class _HomePageState extends State<HomePage> {
   Future<void> loadIfExists() async {
     firstTime = false;
 
+    if (prefs.getBool('paid') ?? false) updatePayment();
+
     try {
       print('loadIfExists');
 
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       DateTime date = DateTime.now();
 
@@ -1919,8 +2290,8 @@ class _HomePageState extends State<HomePage> {
         editMode = false;
       });
 
-      var resultsForDays =
-          await conn!.query('SELECT DATEDIFF(CURRENT_DATE(), last_payment_date), user_mode FROM users WHERE user_id = ?', [userId]);
+      var resultsForDays = await conn!
+          .query('SELECT DATEDIFF(CURRENT_DATE(), last_payment_date), user_mode FROM users WHERE user_id = ?', [userId]);
       if (resultsForDays.length > 0) {
         setState(() {
           permanentUser = int.parse(resultsForDays.first[1].toString()) == 1;
@@ -1991,6 +2362,7 @@ class _HomePageState extends State<HomePage> {
     } catch (error) {
       EasyLoading.showToast(error.toString());
     } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
@@ -2005,7 +2377,7 @@ class _HomePageState extends State<HomePage> {
 
       print('addReport');
 
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       double bazdeh = ((double.parse(khalesController.text) * 100) /
           (24 - double.parse(sleepController.text) - double.parse(schoolController.text)));
@@ -2114,6 +2486,7 @@ class _HomePageState extends State<HomePage> {
         widgetsEnabled = true;
       });
     } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
@@ -2124,7 +2497,7 @@ class _HomePageState extends State<HomePage> {
     print('getNewAverage');
 
     try {
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       var results = await conn!.query('SELECT avg_score FROM users WHERE user_id = ?', [userId]);
       if (results.length != 0) {
@@ -2136,6 +2509,7 @@ class _HomePageState extends State<HomePage> {
 
       loadIfExists();
     } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
@@ -2145,7 +2519,7 @@ class _HomePageState extends State<HomePage> {
       EasyLoading.show(status: 'در حال دریافت لیست');
 
       print('getAll');
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       DateTime date = DateTime.now();
 
@@ -2193,14 +2567,14 @@ class _HomePageState extends State<HomePage> {
         ),
       );
 
-      if (!is1) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 2500, 0, 'انا لله و انا الیه راجعون|زیر 2500'));
+      if (!is1) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 2500, 0, 'غایب|زیر 2500'));
       if (!is2) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 5000, 0, 'الله اکبر|2500 تا 5000'));
       if (!is3) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 5500, 0, 'بسم الله|5000 تا 5500'));
       if (!is4) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 6000, 0, 'لب مرز|5500 تا 6000'));
       if (!is5) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 6500, 0, 'آینده‌دار|6000 تا 6500'));
-      if (!is6) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 7000, 0, 'نخبه|6500 تا 7000'));
-      if (!is7) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 7500, 0, 'فرانخبه|7000 تا 7500'));
-      if (!is8) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 8000, 0, 'شاه‌تست|7500 تا 8000'));
+      if (!is6) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 7000, 0, 'دانا|6500 تا 7000'));
+      if (!is7) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 7500, 0, 'نخبه|7000 تا 7500'));
+      if (!is8) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 8000, 0, 'فرانخبه|7500 تا 8000'));
       if (!is9) allUsers!.add(Item(0, '', 0, 0, 0, 0, 0, 9000, 0, 'آدار|بالای 8000'));
 
       allUsers!.sort(mySorter);
@@ -2211,6 +2585,7 @@ class _HomePageState extends State<HomePage> {
     } catch (error) {
       EasyLoading.show(status: error.toString());
     } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
@@ -2221,7 +2596,7 @@ class _HomePageState extends State<HomePage> {
 
       print('getUserHistory');
 
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      conn = await MySqlConnection.connect(settings);
 
       var resultsForHistory1 = await conn!.query(
           'SELECT date, ekhtesasi, omumi, khales, sleep, school, bazdeh, score FROM reports WHERE user_id_fk = (SELECT user_id FROM users WHERE phone = ?) ORDER BY date DESC',
@@ -2255,7 +2630,7 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       }
-      var resultsForHistory2 = await conn!.query('SELECT user_id, name, avg_score FROM users WHERE phone = ?', [phone]);
+      var resultsForHistory2 = await conn!.query('SELECT user_id, name, avg_score, user_mode FROM users WHERE phone = ?', [phone]);
 
       if (resultsForHistory2.length > 0) {
         setState(() {
@@ -2263,48 +2638,79 @@ class _HomePageState extends State<HomePage> {
           historyModeUserId = resultsForHistory2.first[0];
           historyModeName = resultsForHistory2.first[1];
           historyModeAverage = resultsForHistory2.first[2];
+          historyModePermanent = int.parse(resultsForHistory2.first[3].toString()) == 1;
           historyModePhone = phone;
         });
       }
     } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
 
-  Future<void> updateRanks() async {
+  Future<void> updatePayment() async {
     try {
-      EasyLoading.show(status: 'در حال به‌روزرسانی');
-      if (conn == null) conn = await MySqlConnection.connect(settings);
+      EasyLoading.show(status: 'در حال ذخیره آخرین پرداخت');
+      conn = await MySqlConnection.connect(settings);
 
-      DateTime date = DateTime.now().subtract(
-        Duration(
-          days: 1,
-        ),
-      );
-
-      String year = date.year.toString();
-      String month = date.month.toString();
-      String day = date.day.toString();
-      if (month.length == 1) month = '0' + month;
-      if (day.length == 1) day = '0' + day;
-      String dateString = year + '-' + month + '-' + day;
-
-      await conn!.query('UPDATE users SET last_rank = 0;');
-      await conn!.query(
-          'UPDATE users SET last_rank = (SELECT COUNT(*) FROM reports WHERE score >= (SELECT score FROM reports WHERE reports.user_id_fk = users.user_id AND date = ?) AND date = ?);',
-          [
-            dateString,
-            dateString
-          ]).whenComplete(() => {
-            EasyLoading.showToast(
-              'رتبه‌ها به‌روز شد',
-            ),
+      await conn!.query('UPDATE users SET last_payment_date = CURRENT_DATE() WHERE user_id = ?', [userId]).whenComplete(() => {
+            setState(() {
+              daysPassed = 0;
+            }),
+            prefs.setBool('paid', false),
           });
     } catch (error) {
       EasyLoading.showToast(
-        'مشکلی در اتصال به سرور رخ داده است'.toString(),
+        'مشکلی در اتصال به سرور رخ داده است',
       );
     } finally {
+      conn!.close();
+      EasyLoading.dismiss();
+    }
+  }
+
+  Future<void> convertToMonthly(int id) async {
+    try {
+      EasyLoading.show(status: 'در حال انجام');
+      conn = await MySqlConnection.connect(settings);
+
+      await conn!.query('UPDATE users SET user_mode = 0 WHERE user_id = ?', [id]).whenComplete(() => {
+      EasyLoading.showToast(
+      'انجام شد',
+      ),
+        setState(() {
+          historyModePermanent = false;
+        }),
+      });
+    } catch (error) {
+      EasyLoading.showToast(
+        'مشکلی در اتصال به سرور رخ داده است',
+      );
+    } finally {
+      conn!.close();
+      EasyLoading.dismiss();
+    }
+  }
+
+  Future<void> convertToPermanent(int id) async {
+    try {
+      EasyLoading.show(status: 'در حال انجام');
+      conn = await MySqlConnection.connect(settings);
+
+      await conn!.query('UPDATE users SET user_mode = 1 WHERE user_id = ?', [id]).whenComplete(() => {
+        EasyLoading.showToast(
+          'انجام شد',
+        ),
+        setState(() {
+          historyModePermanent = true;
+        }),
+      });
+    } catch (error) {
+      EasyLoading.showToast(
+        'مشکلی در اتصال به سرور رخ داده است',
+      );
+    } finally {
+      conn!.close();
       EasyLoading.dismiss();
     }
   }
@@ -2331,7 +2737,7 @@ class _HomePageState extends State<HomePage> {
   String returnGroupName(double input) {
     String groupName = '';
     if (input <= 2500) {
-      groupName = 'انا لله و انا الیه راجعون|زیر 2500';
+      groupName = 'غایب|زیر 2500';
       is1 = true;
     } else if (input > 2500 && input <= 5000) {
       groupName = 'الله اکبر|2500 تا 5000';
@@ -2346,13 +2752,13 @@ class _HomePageState extends State<HomePage> {
       groupName = 'آینده‌دار|6000 تا 6500';
       is5 = true;
     } else if (input > 6500 && input <= 7000) {
-      groupName = 'نخبه|6500 تا 7000';
+      groupName = 'دانا|6500 تا 7000';
       is6 = true;
     } else if (input > 7000 && input <= 7500) {
-      groupName = 'فرانخبه|7000 تا 7500';
+      groupName = 'نخبه|7000 تا 7500';
       is7 = true;
     } else if (input > 7500 && input <= 8000) {
-      groupName = 'شاه‌تست|7500 تا 8000';
+      groupName = 'فرانخبه|7500 تا 8000';
       is8 = true;
     } else {
       groupName = 'آدار|بالای 8000';
